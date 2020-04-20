@@ -206,6 +206,11 @@ namespace TotalTag.GateController
                 ok = false;
             }
 
+            if (!ok)
+            {
+                _gpioHelper = new GpioHelper();
+            }
+
             LogHelper.Write(ok ? "Iniciando em modo Raspberry" : "Iniciando em modo simulação");
         }
     }

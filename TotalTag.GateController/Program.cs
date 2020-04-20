@@ -1,4 +1,4 @@
-﻿using System;
+﻿using TotalTag.GateController.Helpers;
 
 namespace TotalTag.GateController
 {
@@ -6,7 +6,7 @@ namespace TotalTag.GateController
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("Hello World!");
+            CommonHelper.Init(true);
         }
     }
 }

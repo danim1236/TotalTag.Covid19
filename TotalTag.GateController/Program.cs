@@ -7,7 +7,7 @@ namespace TotalTag.GateController
     {
         static void Main(string[] args)
         {
-            CommonHelper.Init(true);
+            CommonHelper.Init();
 
             new ServiceRunner<GateControllerService>().Run(args).Wait();
         }

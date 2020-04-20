@@ -1,12 +1,12 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
-using TotalTag.Common.Enums;
 using TotalTag.Common.Model;
 using TotalTag.Common.Tools;
 using TotalTag.Helpers;
 using TotalTag.NetCore.GpioHelpers;
 using TotalTag.NetCore.Service;
+using TotalTag.O3.Common;
 using TotalTag.Push.Client;
 using TotalTag.WebserviceClient;
 using TotalTag.WebserviceClient.CoreClient;
@@ -61,15 +61,15 @@ namespace TotalTag.GateController
             {
                 switch (e.RouteActionType)
                 {
-                    case RouteActionTypeEnum.AUTO_LIBERATION:
+                    case O3RouteActionTypes.START_O3_PROCESS:
                         Task.Factory.StartNew(StartO3Process);
                         break;
 
-                    case RouteActionTypeEnum.AUTO_EMERGENCY_CALL:
+                    case O3RouteActionTypes.ABORT:
                         _abort = _inProcess;
                         break;
 
-                    case RouteActionTypeEnum.MANUAL_LIBERATION:
+                    case O3RouteActionTypes.OPEN_BACK_DOOR:
                         Task.Factory.StartNew(StartBackdoorOpen);
                         break;
                 }

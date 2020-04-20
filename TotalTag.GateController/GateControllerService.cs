@@ -18,7 +18,8 @@ namespace TotalTag.GateController
         private GateControllerConfig _config;
         private IGpioHelper _gpioHelper;
         private readonly int _facilityId;
-        private volatile bool _inO3Process;
+        private volatile bool _inProcess;
+        private volatile bool _abort;
 
         private const uint OPEN_GATE1_PIN = 0;
         private const uint OPEN_GATE2_PIN = 1;
@@ -56,32 +57,73 @@ namespace TotalTag.GateController
 
         private void OnIndividualEventTrig(object sender, IndividualEvent e)
         {
-            if (!_inO3Process &&
-                e.RouteActionType == RouteActionTypeEnum.AUTO_LIBERATION && e.AssetLocationId == _facilityId)
+            if (!_inProcess && e.AssetLocationId == _facilityId)
             {
-                Task.Factory.StartNew(StartO3Process);
+                switch (e.RouteActionType)
+                {
+                    case RouteActionTypeEnum.AUTO_LIBERATION:
+                        Task.Factory.StartNew(StartO3Process);
+                        break;
+
+                    case RouteActionTypeEnum.AUTO_EMERGENCY_CALL:
+                        _abort = _inProcess;
+                        break;
+
+                    case RouteActionTypeEnum.MANUAL_LIBERATION:
+                        Task.Factory.StartNew(StartBackdoorOpen);
+                        break;
+                }
             }
+        }
+
+        private void StartBackdoorOpen()
+        {
+            _inProcess = true;
+
+            DoorCycle(1, false);
+
+            _abort = false;
+            _inProcess = false;
         }
 
         private void StartO3Process()
         {
-            _inO3Process = true;
+            _inProcess = true;
 
             LogHelper.Write("Iniciando o processo de aspersão de O3");
 
             if (DoorCycle(0, true))
             {
+                if (!_abort)
+                {
+                    LogHelper.Write($"Início da aspersão de O3 por {_config.O3FlushSeconds}s.");
 
-                _gpioHelper.SetPin(FLUSH_O3_PIN, true);
+                    _gpioHelper.SetPin(FLUSH_O3_PIN, true);
 
-                Task.Delay(_config.O3FlushSeconds * 1000).Wait();
+                    var begin = DateTime.Now;
+                    while (DateTime.Now.Subtract(begin). TotalSeconds < _config.O3FlushSeconds) 
+                    {
+                        if (_abort)
+                        {
+                            break;
+                        }
 
-                _gpioHelper.SetPin(FLUSH_O3_PIN, false);
+                        Task.Delay(100).Wait();
+                    }
 
-                DoorCycle(1, false);
+                    LogHelper.Write("Finalizando a aspersão de O3");
+
+                    _gpioHelper.SetPin(FLUSH_O3_PIN, false);
+
+                    if (!_abort)
+                    {
+                        DoorCycle(1, false);
+                    }
+                }
             }
 
-            _inO3Process = false;
+            _abort = false;
+            _inProcess = false;
         }
 
         private bool DoorCycle(int gate, bool useTimeout)
@@ -91,33 +133,51 @@ namespace TotalTag.GateController
             var rsGatePin = new[] {RS_GATE1_PIN, RS_GATE2_PIN};
 
             var fail = false;
+            var door = gate + 1;
+
+            LogHelper.Write($"Abrindo a porta {door}.");
             _gpioHelper.SetPin(openGatePin[gate], true);
             var begin = DateTime.Now;
             while (_gpioHelper.ReadPin(irGatePin[gate]))
             {
-                if (useTimeout && DateTime.Now.Subtract(begin).TotalSeconds > _config.TimeoutForEntrance)
+                if (_abort || (useTimeout && DateTime.Now.Subtract(begin).TotalSeconds > _config.TimeoutForEntrance))
                 {
                     fail = true;
                     break;
                 }
             }
 
+            LogHelper.Write(fail
+                ? $"Ninguém passou pela porta {door} em {_config.TimeoutForEntrance}s. Abortando!"
+                : $"O usuário passou pela porta {door}.");
+
             if (!fail)
             {
                 while (!_gpioHelper.ReadPin(irGatePin[gate]))
                 {
+                    if (_abort)
+                    {
+                        break;
+                    }
                 }
             }
+
+            LogHelper.Write($"Fechando a porta {door}");
 
             _gpioHelper.SetPin(openGatePin[gate], false);
 
             while (!_gpioHelper.ReadPin(rsGatePin[gate]))
             {
+                if (_abort)
+                {
+                    break;
+                }
             }
+
+            LogHelper.Write($"Porta {door} fechada.");
 
             return !fail;
         }
-
 
         private void InitGpio()
         {

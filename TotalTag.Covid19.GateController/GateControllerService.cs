@@ -3,15 +3,15 @@ using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using TotalTag.Common.Model;
 using TotalTag.Common.Tools;
+using TotalTag.Covid19.Common;
 using TotalTag.Helpers;
 using TotalTag.NetCore.GpioHelpers;
 using TotalTag.NetCore.Service;
-using TotalTag.O3.Common;
 using TotalTag.Push.Client;
 using TotalTag.WebserviceClient;
 using TotalTag.WebserviceClient.CoreClient;
 
-namespace TotalTag.GateController
+namespace TotalTag.Covid19.GateController
 {
     internal class GateControllerService : MainTask
     {

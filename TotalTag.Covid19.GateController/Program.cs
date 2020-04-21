@@ -1,7 +1,7 @@
-﻿using TotalTag.GateController.Helpers;
+﻿using TotalTag.Covid19.GateController.Helpers;
 using TotalTag.NetCore.Service;
 
-namespace TotalTag.GateController
+namespace TotalTag.Covid19.GateController
 {
     class Program
     {

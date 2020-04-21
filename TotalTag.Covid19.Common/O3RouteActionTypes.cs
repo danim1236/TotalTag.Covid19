@@ -1,6 +1,6 @@
 ﻿using TotalTag.Common.Enums;
 
-namespace TotalTag.O3.Common
+namespace TotalTag.Covid19.Common
 {
     public static class O3RouteActionTypes
     {

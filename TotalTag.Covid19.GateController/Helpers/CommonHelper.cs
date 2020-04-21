@@ -2,7 +2,7 @@
 using TotalTag.Helpers;
 using TotalTag.WebserviceClient.CoreClient;
 
-namespace TotalTag.GateController.Helpers
+namespace TotalTag.Covid19.GateController.Helpers
 {
     public class CommonHelper
     {

@@ -1,4 +1,4 @@
-﻿namespace TotalTag.GateController
+﻿namespace TotalTag.Covid19.GateController
 {
     internal class GateControllerConfig
     {
